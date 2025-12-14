@@ -55,19 +55,10 @@ const calculateParts = (
     const parts: Part[] = [];
 
     const halfW = width / 2;
-    const halfH = height / 2;
+    // const halfH = height / 2; // Removed, we use 0 to height
     // const halfD = depth / 2;
 
-    // Front Z Base Position
-    // If Overlay: Front sits on top of carcass front edge (+halfD + thickness/2 + gap?).
-    // Usually Overlay means the front is OUTSIDE the box.
-    // Box Front Edge Z = depth/2.
-    // Front Center Z = depth/2 + frontThickness/2 (+ gap? usually gap is between door and box? or bumpers).
-
-    // If Inset: Front sits INSIDE the carcass.
-    // Box Front Edge Z = depth/2.
-    // Front Center Z = depth/2 - frontThickness/2 - insetGap(2mm?).
-
+    // Front Z Base Position (Unchanged, Z=0 is center depth)
     const frontThickness = 18; // Standard 18mm front
     let zFrontCenter = 0;
 
@@ -91,13 +82,13 @@ const calculateParts = (
             },
             position: {
                 x: 0,
-                y: 0,
+                y: height / 2, // Centered vertically in the box
                 z: (-depth / 2) + backPanel.inset + (backPanel.thickness / 2)
             },
             grainActive: true,
             edges: { top: 0, bottom: 0, front: 0, back: 0 },
             materialId: 'mat_back_3mm',
-            color: '#f5f5f5' // Back panel color
+            color: '#f5f5f5'
         });
     }
 
@@ -107,7 +98,7 @@ const calculateParts = (
         name: 'Lateral Izquierdo',
         type: 'side',
         dimensions: { w: thickness, h: height, d: depth },
-        position: { x: -halfW + thickness / 2, y: 0, z: 0 },
+        position: { x: -halfW + thickness / 2, y: height / 2, z: 0 },
         grainActive: true,
         edges: { top: 0, bottom: 0, front: 1, back: 0 },
         materialId: mat.id,
@@ -119,7 +110,7 @@ const calculateParts = (
         name: 'Lateral Derecho',
         type: 'side',
         dimensions: { w: thickness, h: height, d: depth },
-        position: { x: halfW - thickness / 2, y: 0, z: 0 },
+        position: { x: halfW - thickness / 2, y: height / 2, z: 0 },
         grainActive: true,
         edges: { top: 0, bottom: 0, front: 1, back: 0 },
         materialId: mat.id,
@@ -133,7 +124,7 @@ const calculateParts = (
         name: 'Techo',
         type: 'top',
         dimensions: { w: innerWidth, h: thickness, d: depth },
-        position: { x: 0, y: halfH - thickness / 2, z: 0 },
+        position: { x: 0, y: height - thickness / 2, z: 0 },
         grainActive: true,
         edges: { top: 0, bottom: 0, front: 1, back: 0 },
         materialId: mat.id,
@@ -145,7 +136,7 @@ const calculateParts = (
         name: 'Piso',
         type: 'bottom',
         dimensions: { w: innerWidth, h: thickness, d: depth },
-        position: { x: 0, y: -halfH + thickness / 2, z: 0 },
+        position: { x: 0, y: thickness / 2, z: 0 },
         grainActive: true,
         edges: { top: 0, bottom: 0, front: 1, back: 0 },
         materialId: mat.id,
@@ -154,11 +145,6 @@ const calculateParts = (
 
     // 3. Shelves
     if (shelves.count > 0) {
-        // Shelf Depth Adjustment for Door Inset
-        // If Inset Door, shelf must recede?
-        // Usually shelf is 20-30mm setback regardless.
-        // If Inset Door, frontSetback must be > (frontThickness + gap).
-
         let frontSetback = 20;
         if (fronts.inset && (fronts.type !== 'none')) {
             frontSetback = Math.max(frontSetback, frontThickness + 5);
@@ -174,7 +160,7 @@ const calculateParts = (
         const spacePerSection = innerHeight / (shelves.count + 1);
 
         for (let i = 0; i < shelves.count; i++) {
-            const yPos = (-halfH + thickness) + ((i + 1) * spacePerSection);
+            const yPos = thickness + ((i + 1) * spacePerSection);
             parts.push({
                 id: `shelf_${i}`,
                 name: `Repisa ${i + 1}`,
@@ -192,11 +178,6 @@ const calculateParts = (
     // 5. Fronts
     if (fronts.type !== 'none') {
         const gap = fronts.gap;
-
-        // Dimensions Base
-        // Overlay: Covers box W and H (minus gap/reveal?)
-        // Inset: Fits inside Inner W and H (minus gap)
-
         let availableW = 0;
         let availableH = 0;
 
@@ -204,11 +185,19 @@ const calculateParts = (
             availableW = innerWidth;
             availableH = height - (thickness * 2);
         } else {
-            // Overlay: Full Width/Height minus 1.5mm gap all around? (typical 3mm total reveal)
-            // Let's say Full Width - 3mm. Full Height - 3mm.
             availableW = width - (gap * 2);
-            availableH = height - (gap * 2); // usually top/bottom reveal?
+            availableH = height - (gap * 2);
         }
+
+        // Base Y for fronts center calc
+        // Top of cabinet is height.
+        // Center of front area determined by half of available H + bottom offset.
+
+        // If inset: Area is from thickness to height-thickness. Center is height/2.
+        // If overlay: Area is from gap to height-gap. Center is height/2.
+        // So center Y is mainly just height/2. Assuming symetric top/bottom reveals.
+
+        // But for positions we need actual centers.
 
         if (fronts.type === 'door_single') {
             parts.push({
@@ -216,20 +205,20 @@ const calculateParts = (
                 name: 'Puerta',
                 type: 'door',
                 dimensions: { w: availableW - gap, h: availableH - gap, d: frontThickness },
-                position: { x: 0, y: 0, z: zFrontCenter },
+                position: { x: 0, y: height / 2, z: zFrontCenter },
                 grainActive: true,
                 edges: { top: 2, bottom: 2, front: 0, back: 0 },
                 materialId: frontMaterial?.id || mat.id,
                 color: frontMaterial?.color || mat.color
             });
         } else if (fronts.type === 'door_double') {
-            const doorW = (availableW - gap) / 2; // Gap in middle
+            const doorW = (availableW - gap) / 2;
             parts.push({
                 id: 'door_left',
                 name: 'Puerta Izquierda',
                 type: 'door',
                 dimensions: { w: doorW, h: availableH - gap, d: frontThickness },
-                position: { x: -doorW / 2 - gap / 2, y: 0, z: zFrontCenter },
+                position: { x: -doorW / 2 - gap / 2, y: height / 2, z: zFrontCenter },
                 grainActive: true,
                 edges: { top: 2, bottom: 2, front: 0, back: 0 },
                 materialId: frontMaterial?.id || mat.id,
@@ -240,31 +229,21 @@ const calculateParts = (
                 name: 'Puerta Derecha',
                 type: 'door',
                 dimensions: { w: doorW, h: availableH - gap, d: frontThickness },
-                position: { x: doorW / 2 + gap / 2, y: 0, z: zFrontCenter },
+                position: { x: doorW / 2 + gap / 2, y: height / 2, z: zFrontCenter },
                 grainActive: true,
                 edges: { top: 2, bottom: 2, front: 0, back: 0 },
                 materialId: frontMaterial?.id || mat.id,
                 color: frontMaterial?.color || mat.color
             });
         } else if (fronts.type === 'drawers') {
-            // Drawers Vertical Stack
-            // Count = fronts.count? default 3
             const count = fronts.count || 3;
-            // Height per drawer = availableH / count - gaps
-            const totalGaps = (count - 1) * gap; // gaps between drawers
+            const totalGaps = (count - 1) * gap;
             const drawerH = (availableH - totalGaps) / count;
-            // Start form Top? or Bottom? Bottom usually.
 
             // Y Start (Bottom Edge of available area)
-            // If Inset: -halfH + thickness.
-            // If Overlay: -halfH + gap.
-
-            const startY = fronts.inset ? (-halfH + thickness) : (-halfH + gap);
+            const startY = fronts.inset ? (thickness) : (gap);
 
             for (let i = 0; i < count; i++) {
-                // Center Y of this drawer
-                // Bottom of drawer i = startY + i*(drawerH + gap)
-                // Center = Bottom + drawerH/2
                 const bottomY = startY + (i * (drawerH + gap));
                 const centerY = bottomY + (drawerH / 2);
 
@@ -280,35 +259,22 @@ const calculateParts = (
                     color: frontMaterial?.color || mat.color
                 });
 
-                // DRAWER BOX PARTS
+                // DRAWER BOX PARTS (Keep internal logic relative to centerY)
                 const boxGapSide = fronts.drawerBox?.glideClearance || 13;
                 const boxW = (availableW - gap) - (boxGapSide * 2);
-                const cleaningBottom = 20; // Space below drawer
-                const boxH = Math.max(50, drawerH - gap - cleaningBottom); // Height of the box
-                const boxD = depth - 50; // 50mm space at back
-
-                // Box positioned behind the front.
-                // Z Position:
-                // Front is at zFrontCenter.
-                // If Overlay: Front is OUTSIDE. Box starts at Depth/2 (front edge of carcass)
-                // If Inset: Front is INSIDE. Box starts behind front.
-                // Let's assume Box Front Face is flush with Carcass Front Edge (approx) or attached to Front.
-                // Simplified: Box center Z = Box Start Z - boxD/2
-                // Box Start Z = (depth / 2) - (fronts.inset ? (frontThickness + gap) : 0);
+                const cleaningBottom = 20;
+                const boxH = Math.max(50, drawerH - gap - cleaningBottom);
+                const boxD = depth - 50;
 
                 const boxStartZ = (depth / 2) - (fronts.inset ? (frontThickness + 2) : 0);
                 const boxZ = boxStartZ - (boxD / 2);
-
-                const boxMat = DRAWER_BOX_MATERIAL; // Use internal material
-
-                // 1. Box Sides (Left/Right) - Run full depth of box
-                // Position X relative to drawer center (0)
+                const boxMat = DRAWER_BOX_MATERIAL;
                 const distToSide = (boxW / 2) - (boxMat.thickness / 2);
 
                 parts.push({
                     id: `drawer_box_side_L_${i}`,
                     name: `Cajón ${i + 1} Lat. Izq`,
-                    type: 'side', // internal side
+                    type: 'side',
                     dimensions: { w: boxMat.thickness, h: boxH, d: boxD },
                     position: { x: -distToSide, y: centerY, z: boxZ },
                     grainActive: false,
@@ -329,14 +295,13 @@ const calculateParts = (
                     color: boxMat.color
                 });
 
-                // 2. Box Front/Back (Between sides)
                 const boxInnerW = boxW - (boxMat.thickness * 2);
                 const distToFrontBack = (boxD / 2) - (boxMat.thickness / 2);
 
                 parts.push({
                     id: `drawer_box_front_${i}`,
                     name: `Cajón ${i + 1} Frente Int`,
-                    type: 'back', // visually similar
+                    type: 'back',
                     dimensions: { w: boxInnerW, h: boxH, d: boxMat.thickness },
                     position: { x: 0, y: centerY, z: boxZ + distToFrontBack },
                     grainActive: false,
@@ -357,8 +322,6 @@ const calculateParts = (
                     color: boxMat.color
                 });
 
-                // 3. Box Bottom (Grooved/Nailed) - Simplified: Nailed to bottom for now
-                // Located at bottom of box parts.
                 const bottomThickness = 3;
                 parts.push({
                     id: `drawer_box_bottom_${i}`,
@@ -384,10 +347,11 @@ export const useStore = create<CabinetState>((set, get) => ({
     shelves: INITIAL_SHELVES,
     fronts: INITIAL_FRONTS,
     frontMaterial: undefined,
-    parts: calculateParts(INITIAL_DIMENSIONS, DEFAULT_MATERIAL, INITIAL_BACK_PANEL, INITIAL_SHELVES, INITIAL_FRONTS),
+    // Start clean for "Free Design" experience
+    parts: [],
 
     // Free Design Mode
-    designMode: 'parametric',
+    designMode: 'manual',
     gizmoMode: 'translate',
     viewConfig: { explodeFactor: 0, showLabels: false },
     selectedPartId: null,

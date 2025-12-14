@@ -63,6 +63,15 @@ export const calculateSnap = (
 
     // --- Y AXIS ---
     let bestYDiff = SNAP_THRESHOLD;
+
+    // 1. Snap to Floor (Y=0)
+    const distToFloor = Math.abs(activeBounds.y.min);
+    if (distToFloor < bestYDiff) {
+        bestYDiff = distToFloor;
+        snappedY = activePart.dimensions.h / 2;
+    }
+
+    // 2. Snap to Other Parts
     for (const other of otherParts) {
         const otherBounds = getBounds(other);
         const checks = [
