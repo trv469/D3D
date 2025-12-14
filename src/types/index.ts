@@ -79,9 +79,14 @@ export interface CabinetState {
     // Free Design Mode
     designMode: 'parametric' | 'manual';
     gizmoMode: 'translate' | 'rotate' | 'scale';
+    viewConfig: {
+        explodeFactor: number; // 0 to 2
+        showLabels: boolean;
+    };
     selectedPartId: string | null;
     setDesignMode: (mode: 'parametric' | 'manual') => void;
     setGizmoMode: (mode: 'translate' | 'rotate' | 'scale') => void;
+    setViewConfig: (config: Partial<{ explodeFactor: number; showLabels: boolean }>) => void;
     selectPart: (id: string | null) => void;
     updatePart: (id: string, updates: Partial<Part>) => void;
     addPart: (part: Part) => void; // New part from scratch

@@ -15,6 +15,7 @@ import {
   Plus,
   RotateCw,
   Trash2,
+  Wrench,
 } from "lucide-react";
 import { generateProjectJSON } from "../../utils/exporter";
 
@@ -46,9 +47,9 @@ export const Controls: React.FC = () => {
   const state = useStore();
   const { dimensions, setDimensions } = state;
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dims" | "config" | "style">(
-    "dims"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "dims" | "config" | "style" | "assembly"
+  >("dims");
   const [isExpanded, setIsExpanded] = useState(true);
 
   const handleExport = () => {
@@ -168,6 +169,7 @@ export const Controls: React.FC = () => {
             <TabButton id="dims" icon={Ruler} label="Size" />
             <TabButton id="config" icon={Layers} label="Config" />
             <TabButton id="style" icon={Palette} label="Style" />
+            <TabButton id="assembly" icon={Wrench} label="Assembly" />
           </div>
         )}
 
@@ -475,6 +477,57 @@ export const Controls: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ASSEMBLY TAB */}
+          {state.designMode === "parametric" && activeTab === "assembly" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  Visualization
+                </h3>
+
+                {/* Exploded View Slider */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Exploded View
+                    </label>
+                    <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-600">
+                      {Math.round(state.viewConfig.explodeFactor * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={2}
+                    step={0.1}
+                    value={state.viewConfig.explodeFactor}
+                    onChange={(e) =>
+                      state.setViewConfig({
+                        explodeFactor: Number(e.target.value),
+                      })
+                    }
+                    className="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Show Labels Toggle */}
+                <div className="flex items-center justify-between py-2 border-t border-gray-50 mt-4 pt-4">
+                  <span className="text-sm text-gray-700 font-medium">
+                    Show Part Labels
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={state.viewConfig.showLabels}
+                    onChange={(e) =>
+                      state.setViewConfig({ showLabels: e.target.checked })
+                    }
+                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
           )}
 

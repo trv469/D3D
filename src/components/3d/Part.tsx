@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { motion } from "framer-motion-3d";
 import { useState } from "react";
 import { useStore } from "../../store/useStore";
-import { TransformControls } from "@react-three/drei";
+import { TransformControls, Text, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 import { calculateSnap } from "../../utils/snapping";
 
@@ -17,9 +17,40 @@ interface Part3DProps {
 export const Part3D: React.FC<Part3DProps> = ({ part }) => {
   const { dimensions, position, rotation } = part;
   const [isOpen, setIsOpen] = useState(false);
-  const { designMode, gizmoMode, selectPart, selectedPartId, updatePart } =
-    useStore();
+  const {
+    designMode,
+    gizmoMode,
+    viewConfig,
+    selectPart,
+    selectedPartId,
+    updatePart,
+  } = useStore();
   const isSelected = selectedPartId === part.id;
+
+  // Explosion Logic
+  const explodeScale =
+    designMode === "parametric" ? 1 + viewConfig.explodeFactor : 1;
+  const explodedPos = [
+    position.x * explodeScale,
+    position.y * explodeScale,
+    position.z * explodeScale,
+  ] as [number, number, number];
+
+  const Label = () =>
+    viewConfig.showLabels && designMode === "parametric" ? (
+      <Billboard position={[0, 0, dimensions.d / 2 + 10]}>
+        <Text
+          fontSize={40}
+          color="black"
+          outlineWidth={2}
+          outlineColor="white"
+          anchorX="center"
+          anchorY="middle"
+        >
+          {part.name}
+        </Text>
+      </Billboard>
+    ) : null;
 
   const groupRef = useRef<THREE.Group>(null);
 
@@ -99,27 +130,36 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
         )}
         <group
           ref={groupRef}
-          position={[position.x + pivotOffset, position.y, position.z]}
+          position={[
+            explodedPos[0] + pivotOffset * explodeScale,
+            explodedPos[1],
+            explodedPos[2],
+          ]}
           rotation={rotation ? [rotation.x, rotation.y, rotation.z] : [0, 0, 0]}
           onClick={handleSelect}
         >
-          <motion.group
-            animate={{
-              rotateY: isOpen ? (isLeft ? -Math.PI / 2.5 : Math.PI / 2.5) : 0,
-            }}
-            transition={{ type: "spring", stiffness: 40 }}
-            // onClick assigned to parent group for selection logic
-          >
-            <mesh position={[-pivotOffset, 0, 0]} castShadow receiveShadow>
-              <boxGeometry args={[dimensions.w, dimensions.h, dimensions.d]} />
-              <meshStandardMaterial
-                color={part.color || "#f0f0f0"}
-                roughness={0.8}
-                metalness={0.1}
-              />
-              <Edges threshold={15} color="#cccccc" />
-            </mesh>
-          </motion.group>
+          <group>
+            <Label />
+            <motion.group
+              animate={{
+                rotateY: isOpen ? (isLeft ? -Math.PI / 2.5 : Math.PI / 2.5) : 0,
+              }}
+              transition={{ type: "spring", stiffness: 40 }}
+              // onClick assigned to parent group for selection logic
+            >
+              <mesh position={[-pivotOffset, 0, 0]} castShadow receiveShadow>
+                <boxGeometry
+                  args={[dimensions.w, dimensions.h, dimensions.d]}
+                />
+                <meshStandardMaterial
+                  color={part.color || "#f0f0f0"}
+                  roughness={0.8}
+                  metalness={0.1}
+                />
+                <Edges threshold={15} color="#cccccc" />
+              </mesh>
+            </motion.group>
+          </group>
         </group>
       </group>
     );
@@ -138,7 +178,7 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
       )}
       <motion.group
         ref={groupRef as any}
-        position={[position.x, position.y, position.z]}
+        position={explodedPos}
         rotation={rotation ? [rotation.x, rotation.y, rotation.z] : [0, 0, 0]}
         animate={
           isDrawer ? { z: isOpen ? position.z + 300 : position.z } : undefined
@@ -146,6 +186,7 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
         transition={{ type: "spring", stiffness: 50 }}
         onClick={handleSelect}
       >
+        <Label />
         <mesh castShadow receiveShadow>
           <boxGeometry args={[dimensions.w, dimensions.h, dimensions.d]} />
           <meshStandardMaterial

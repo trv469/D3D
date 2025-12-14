@@ -389,10 +389,12 @@ export const useStore = create<CabinetState>((set, get) => ({
     // Free Design Mode
     designMode: 'parametric',
     gizmoMode: 'translate',
+    viewConfig: { explodeFactor: 0, showLabels: false },
     selectedPartId: null,
 
     setDesignMode: (mode) => set({ designMode: mode }),
     setGizmoMode: (mode) => set({ gizmoMode: mode }),
+    setViewConfig: (config) => set((state) => ({ viewConfig: { ...state.viewConfig, ...config } })),
     selectPart: (id) => set({ selectedPartId: id }),
 
     updatePart: (id, updates) => {
