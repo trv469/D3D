@@ -385,47 +385,99 @@ export const useStore = create<CabinetState>((set, get) => ({
     fronts: INITIAL_FRONTS,
     frontMaterial: undefined,
     parts: calculateParts(INITIAL_DIMENSIONS, DEFAULT_MATERIAL, INITIAL_BACK_PANEL, INITIAL_SHELVES, INITIAL_FRONTS),
+
+    // Free Design Mode
+    designMode: 'parametric',
+    gizmoMode: 'translate',
+    selectedPartId: null,
+
+    setDesignMode: (mode) => set({ designMode: mode }),
+    setGizmoMode: (mode) => set({ gizmoMode: mode }),
+    selectPart: (id) => set({ selectedPartId: id }),
+
+    updatePart: (id, updates) => {
+        set((state) => ({
+            parts: state.parts.map((p) =>
+                p.id === id ? { ...p, ...updates } : p
+            )
+        }));
+    },
+
+    addPart: (part) => {
+        set((state) => ({ parts: [...state.parts, part] }));
+    },
+
+    removePart: (id) => {
+        set((state) => ({
+            parts: state.parts.filter((p) => p.id !== id),
+            selectedPartId: state.selectedPartId === id ? null : state.selectedPartId
+        }));
+    },
+
     setDimensions: (w, h, d) => {
-        const { material, backPanel, shelves, fronts } = get();
+        const { material, backPanel, shelves, fronts, designMode } = get();
         const newDims = { width: w, height: h, depth: d };
-        set({
-            dimensions: newDims,
-            parts: calculateParts(newDims, material, backPanel, shelves, fronts, get().frontMaterial),
-        });
+        // Only recalc in Parametric Mode
+        if (designMode === 'parametric') {
+            set({
+                dimensions: newDims,
+                parts: calculateParts(newDims, material, backPanel, shelves, fronts, get().frontMaterial),
+            });
+        } else {
+            // In Manual mode, just update dimensions state (for reference) but NOT parts
+            set({ dimensions: newDims });
+        }
     },
     setBackPanel: (active, thickness, inset) => {
-        const { dimensions, material, backPanel: currentBP, shelves, fronts } = get();
+        const { dimensions, material, backPanel: currentBP, shelves, fronts, designMode } = get();
         const newBP = {
             active,
             thickness: thickness ?? currentBP.thickness,
             inset: inset ?? currentBP.inset
         };
-        set({
-            backPanel: newBP,
-            parts: calculateParts(dimensions, material, newBP, shelves, fronts, get().frontMaterial)
-        });
+
+        if (designMode === 'parametric') {
+            set({
+                backPanel: newBP,
+                parts: calculateParts(dimensions, material, newBP, shelves, fronts, get().frontMaterial)
+            });
+        } else {
+            set({ backPanel: newBP });
+        }
     },
     setShelves: (count) => {
-        const { dimensions, material, backPanel, shelves: currentShelves, fronts } = get();
+        const { dimensions, material, backPanel, shelves: currentShelves, fronts, designMode } = get();
         const newShelves = { ...currentShelves, count };
-        set({
-            shelves: newShelves,
-            parts: calculateParts(dimensions, material, backPanel, newShelves, fronts, get().frontMaterial)
-        });
+        if (designMode === 'parametric') {
+            set({
+                shelves: newShelves,
+                parts: calculateParts(dimensions, material, backPanel, newShelves, fronts, get().frontMaterial)
+            });
+        } else {
+            set({ shelves: newShelves });
+        }
     },
     setFronts: (config) => {
-        const { dimensions, material, backPanel, shelves, fronts: currentFronts } = get();
+        const { dimensions, material, backPanel, shelves, fronts: currentFronts, designMode } = get();
         const newFronts = { ...currentFronts, ...config };
-        set({
-            fronts: newFronts,
-            parts: calculateParts(dimensions, material, backPanel, shelves, newFronts, get().frontMaterial)
-        });
+        if (designMode === 'parametric') {
+            set({
+                fronts: newFronts,
+                parts: calculateParts(dimensions, material, backPanel, shelves, newFronts, get().frontMaterial)
+            });
+        } else {
+            set({ fronts: newFronts });
+        }
     },
     setFrontMaterial: (mat) => {
-        const { dimensions, material, backPanel, shelves, fronts } = get();
-        set({
-            frontMaterial: mat,
-            parts: calculateParts(dimensions, material, backPanel, shelves, fronts, mat)
-        });
+        const { dimensions, material, backPanel, shelves, fronts, designMode } = get();
+        if (designMode === 'parametric') {
+            set({
+                frontMaterial: mat,
+                parts: calculateParts(dimensions, material, backPanel, shelves, fronts, mat)
+            });
+        } else {
+            set({ frontMaterial: mat });
+        }
     }
 }));

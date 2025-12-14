@@ -4,6 +4,10 @@ import { Cabinet } from "./components/3d/Cabinet";
 import { Controls } from "./components/ui/Controls";
 import { Box } from "lucide-react";
 
+import { useStore } from "./store/useStore";
+
+// ...
+
 function App() {
   return (
     <div className="w-full h-screen bg-gray-50 flex overflow-hidden">
@@ -19,7 +23,10 @@ function App() {
 
       {/* Main 3D Area */}
       <div className="flex-1 relative">
-        <Canvas camera={{ position: [2000, 2000, 2000], fov: 45 }}>
+        <Canvas
+          camera={{ position: [2000, 2000, 2000], fov: 45 }}
+          onPointerMissed={() => useStore.getState().selectPart(null)}
+        >
           <color attach="background" args={["#f5f5f7"]} />
           <OrbitControls
             makeDefault

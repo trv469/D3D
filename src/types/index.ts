@@ -75,4 +75,15 @@ export interface CabinetState {
     setShelves: (count: number) => void;
     setFronts: (config: Partial<FrontConfig>) => void;
     setFrontMaterial: (material: Material) => void;
+
+    // Free Design Mode
+    designMode: 'parametric' | 'manual';
+    gizmoMode: 'translate' | 'rotate' | 'scale';
+    selectedPartId: string | null;
+    setDesignMode: (mode: 'parametric' | 'manual') => void;
+    setGizmoMode: (mode: 'translate' | 'rotate' | 'scale') => void;
+    selectPart: (id: string | null) => void;
+    updatePart: (id: string, updates: Partial<Part>) => void;
+    addPart: (part: Part) => void; // New part from scratch
+    removePart: (id: string) => void;
 }
