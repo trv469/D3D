@@ -55,6 +55,13 @@ export interface Part {
     color?: string;
 }
 
+export interface Measurement {
+    id: string;
+    start: { x: number; y: number; z: number };
+    end: { x: number; y: number; z: number };
+    distance: number;
+}
+
 export interface CabinetState {
     dimensions: Dimensions;
     material: Material;
@@ -70,13 +77,16 @@ export interface CabinetState {
     fronts: FrontConfig;
     frontMaterial?: Material; // Optional separate material for fronts
     parts: Part[];
+
+    // Actions
     setDimensions: (w: number, h: number, d: number) => void;
     setBackPanel: (active: boolean, thickness?: number, inset?: number) => void;
     setShelves: (count: number) => void;
     setFronts: (config: Partial<FrontConfig>) => void;
+    setMaterial: (material: Material) => void;
     setFrontMaterial: (material: Material) => void;
 
-    // Free Design Mode
+    // Free Design & View State
     designMode: 'parametric' | 'manual';
     gizmoMode: 'translate' | 'rotate' | 'scale';
     viewConfig: {
@@ -84,6 +94,19 @@ export interface CabinetState {
         showLabels: boolean;
     };
     selectedPartId: string | null;
+
+    // Measurement Tool
+    measureMode: boolean;
+    measurePendingPoint: { x: number; y: number; z: number } | null;
+    measurements: Measurement[];
+    setMeasureMode: (active: boolean) => void;
+    addMeasurement: (m: Measurement) => void;
+    removeMeasurement: (id: string) => void;
+    addMeasurementPoint: (point: { x: number; y: number; z: number }) => void;
+    clearMeasurements: () => void;
+    resetScene: () => void;
+
+    // Design Actions
     setDesignMode: (mode: 'parametric' | 'manual') => void;
     setGizmoMode: (mode: 'translate' | 'rotate' | 'scale') => void;
     setViewConfig: (config: Partial<{ explodeFactor: number; showLabels: boolean }>) => void;

@@ -1,6 +1,6 @@
 import React from "react";
 import type { Part } from "../../types";
-import { Edges } from "@react-three/drei";
+import { Edges, Outlines } from "@react-three/drei";
 
 import { useRef } from "react";
 import { motion } from "framer-motion-3d";
@@ -17,6 +17,7 @@ interface Part3DProps {
 export const Part3D: React.FC<Part3DProps> = ({ part }) => {
   const { dimensions, position, rotation } = part;
   const [isOpen, setIsOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const {
     designMode,
     gizmoMode,
@@ -56,6 +57,13 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
 
   const handleSelect = (e: any) => {
     e.stopPropagation();
+
+    // Measurement Mode
+    if (useStore.getState().measureMode) {
+      useStore.getState().addMeasurementPoint(e.point);
+      return;
+    }
+
     if (designMode === "manual") {
       selectPart(part.id);
     } else {
@@ -147,7 +155,16 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
               transition={{ type: "spring", stiffness: 40 }}
               // onClick assigned to parent group for selection logic
             >
-              <mesh position={[-pivotOffset, 0, 0]} castShadow receiveShadow>
+              <mesh
+                position={[-pivotOffset, 0, 0]}
+                castShadow
+                receiveShadow
+                onPointerOver={(e) => {
+                  e.stopPropagation();
+                  setHovered(true);
+                }}
+                onPointerOut={() => setHovered(false)}
+              >
                 <boxGeometry
                   args={[dimensions.w, dimensions.h, dimensions.d]}
                 />
@@ -157,6 +174,10 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
                   metalness={0.1}
                 />
                 <Edges threshold={15} color="#cccccc" />
+                {hovered && !isSelected && (
+                  <Outlines thickness={4} color="orange" />
+                )}
+                {isSelected && <Outlines thickness={4} color="#3b82f6" />}
               </mesh>
             </motion.group>
           </group>
@@ -171,7 +192,7 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
       {isSelected && designMode === "manual" && (
         <TransformControls
           object={groupRef as any}
-          mode="translate"
+          mode={gizmoMode}
           onMouseUp={handleTransformEnd}
           translationSnap={10}
         />
@@ -187,7 +208,15 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
         onClick={handleSelect}
       >
         <Label />
-        <mesh castShadow receiveShadow>
+        <mesh
+          castShadow
+          receiveShadow
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHovered(true);
+          }}
+          onPointerOut={() => setHovered(false)}
+        >
           <boxGeometry args={[dimensions.w, dimensions.h, dimensions.d]} />
           <meshStandardMaterial
             color={part.color || "#f0f0f0"}
@@ -195,6 +224,8 @@ export const Part3D: React.FC<Part3DProps> = ({ part }) => {
             metalness={0.1}
           />
           <Edges threshold={15} color="#cccccc" />
+          {hovered && !isSelected && <Outlines thickness={4} color="orange" />}
+          {isSelected && <Outlines thickness={4} color="#3b82f6" />}
         </mesh>
       </motion.group>
     </>

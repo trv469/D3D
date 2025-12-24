@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useStore } from "../../store/useStore";
 import {
   Settings,
@@ -8,42 +8,40 @@ import {
   Check,
   Layers,
   Palette,
-  Ruler,
-  ChevronDown,
   MousePointer2,
-  Move,
-  Plus,
-  RotateCw,
+  ChevronDown,
   Trash2,
   Wrench,
+  Move,
+  Ruler,
 } from "lucide-react";
 import { generateProjectJSON } from "../../utils/exporter";
 
 const FRONT_MATERIALS = [
   {
     id: "mat_white_18",
-    name: "White",
+    name: "Blanco",
     thickness: 18,
     color: "#e0e0e0",
     hex: "#f0f0f0",
   }, // Added hex for UI swatch
   {
     id: "mat_charcoal_18",
-    name: "Charcoal",
+    name: "Gris Carbón",
     thickness: 18,
     color: "#333333",
     hex: "#333333",
   },
   {
     id: "mat_oak_18",
-    name: "Oak",
+    name: "Roble",
     thickness: 18,
     color: "#A0522D",
     hex: "#8B4513",
   },
 ];
 
-export const Controls: React.FC = () => {
+export const Controls = ({ fixed }: { fixed?: boolean }) => {
   const state = useStore();
   const { dimensions, setDimensions } = state;
   const [copied, setCopied] = useState(false);
@@ -105,9 +103,21 @@ export const Controls: React.FC = () => {
   }
 
   return (
-    <div className="absolute right-4 top-4 bottom-4 w-96 flex flex-col z-50 pointer-events-none">
+    <div
+      className={
+        fixed
+          ? "w-full h-full flex flex-col pointer-events-auto"
+          : "absolute right-4 top-4 bottom-4 w-96 flex flex-col z-50 pointer-events-none"
+      }
+    >
       {/* Floating Panel Container */}
-      <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-2xl flex flex-col h-full pointer-events-auto border border-gray-100/50 overflow-hidden">
+      <div
+        className={`${
+          fixed
+            ? "h-full rounded-none shadow-none border-none"
+            : "rounded-2xl shadow-2xl border border-gray-100/50"
+        } bg-white/95 backdrop-blur-md flex flex-col h-full pointer-events-auto overflow-hidden`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-3">
@@ -129,12 +139,14 @@ export const Controls: React.FC = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setIsExpanded(false)}
-            className="text-gray-400 hover:text-gray-600 p-1"
-          >
-            <ChevronDown className="w-5 h-5" />
-          </button>
+          {!fixed && (
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Mode Toggle */}
@@ -166,10 +178,10 @@ export const Controls: React.FC = () => {
         {/* Tabs - Only in Parametric */}
         {state.designMode === "parametric" && (
           <div className="flex border-b border-gray-100 bg-white">
-            <TabButton id="dims" icon={Ruler} label="Size" />
-            <TabButton id="config" icon={Layers} label="Config" />
-            <TabButton id="style" icon={Palette} label="Style" />
-            <TabButton id="assembly" icon={Wrench} label="Assembly" />
+            <TabButton id="dims" icon={Ruler} label="Medidas" />
+            <TabButton id="config" icon={Wrench} label="Configuración" />
+            <TabButton id="style" icon={Palette} label="Estilo" />
+            <TabButton id="assembly" icon={Layers} label="Ensamble" />
           </div>
         )}
 
@@ -181,14 +193,14 @@ export const Controls: React.FC = () => {
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                   <Maximize className="w-3 h-3 text-blue-500" />
-                  Dimensions
+                  Dimensiones
                 </h3>
 
                 {/* Width */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-medium text-gray-700">
-                      Width
+                      Ancho
                     </label>
                     <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-600">
                       {dimensions.width} mm
@@ -210,7 +222,7 @@ export const Controls: React.FC = () => {
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-medium text-gray-700">
-                      Height
+                      Alto
                     </label>
                     <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-600">
                       {dimensions.height} mm
@@ -232,7 +244,7 @@ export const Controls: React.FC = () => {
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-medium text-gray-700">
-                      Depth
+                      Fondo
                     </label>
                     <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-600">
                       {dimensions.depth} mm
@@ -259,12 +271,12 @@ export const Controls: React.FC = () => {
               {/* Structure Section */}
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Structure
+                  Estructura
                 </h3>
 
                 <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 layer-hover">
                   <span className="text-sm text-gray-700 font-medium">
-                    Back Panel
+                    Panel Trasero
                   </span>
                   <input
                     type="checkbox"
@@ -277,7 +289,7 @@ export const Controls: React.FC = () => {
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-gray-700 font-medium">
-                      Shelves
+                      Estantes
                     </span>
                     <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                       {state.shelves.count}
@@ -297,7 +309,7 @@ export const Controls: React.FC = () => {
               {/* Fronts Section */}
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Fronts
+                  Frentes
                 </h3>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -314,9 +326,13 @@ export const Controls: React.FC = () => {
                                 }
                             `}
                       >
-                        {type
-                          .replace("_", " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        {type === "none"
+                          ? "Ninguno"
+                          : type === "door_single"
+                          ? "Puerta Simple"
+                          : type === "door_double"
+                          ? "Puerta Doble"
+                          : "Cajones"}
                       </button>
                     )
                   )}
@@ -326,7 +342,7 @@ export const Controls: React.FC = () => {
                   <div className="space-y-4 pt-4 border-t border-gray-50">
                     <label className="flex items-center justify-between cursor-pointer group">
                       <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
-                        Inset Fronts (Vano)
+                        Frentes Empotrados (Vano)
                       </span>
                       <div
                         className={`w-10 h-6 flex items-center bg-gray-200 rounded-full p-1 duration-300 ease-in-out ${
@@ -352,10 +368,10 @@ export const Controls: React.FC = () => {
                     {state.fronts.type === "drawers" && (
                       <div className="space-y-3 bg-gray-50 p-3 rounded-lg">
                         <div className="flex justify-between items-center text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                          Drawer Config
+                          Configuración de Cajones
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Count</span>
+                          <span className="text-sm">Cantidad</span>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() =>
@@ -402,7 +418,7 @@ export const Controls: React.FC = () => {
               {/* Carcass Material */}
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Carcass Finish
+                  Acabado del Casco
                 </h3>
                 <div className="grid grid-cols-3 gap-3">
                   {[...FRONT_MATERIALS].map(
@@ -412,7 +428,7 @@ export const Controls: React.FC = () => {
                       <button
                         key={mat.id}
                         onClick={() => {
-                          /* assuming useStore has setMaterial logic, simplistic for now */
+                          state.setMaterial(mat);
                         }}
                         className="group relative flex flex-col items-center gap-2 p-1"
                       >
@@ -444,7 +460,7 @@ export const Controls: React.FC = () => {
               {state.fronts.type !== "none" && (
                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    Fronts Finish
+                    Acabado de Frentes
                   </h3>
                   <div className="grid grid-cols-3 gap-3">
                     {FRONT_MATERIALS.map((mat) => (
@@ -485,14 +501,14 @@ export const Controls: React.FC = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Visualization
+                  Visualización
                 </h3>
 
                 {/* Exploded View Slider */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Exploded View
+                      Vista Explosiva
                     </label>
                     <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-600">
                       {Math.round(state.viewConfig.explodeFactor * 100)}%
@@ -516,7 +532,7 @@ export const Controls: React.FC = () => {
                 {/* Show Labels Toggle */}
                 <div className="flex items-center justify-between py-2 border-t border-gray-50 mt-4 pt-4">
                   <span className="text-sm text-gray-700 font-medium">
-                    Show Part Labels
+                    Mostrar Etiquetas
                   </span>
                   <input
                     type="checkbox"
@@ -534,55 +550,6 @@ export const Controls: React.FC = () => {
           {/* MANUAL MODE PANEL */}
           {state.designMode === "manual" && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-                  Actions
-                </h3>
-
-                {/* Tool Select */}
-                <div className="flex bg-gray-100 p-1 rounded-lg mb-4">
-                  <button
-                    onClick={() => state.setGizmoMode("translate")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      state.gizmoMode === "translate"
-                        ? "bg-white shadow text-blue-600"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    <Move className="w-3 h-3" /> Move
-                  </button>
-                  <button
-                    onClick={() => state.setGizmoMode("rotate")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      state.gizmoMode === "rotate"
-                        ? "bg-white shadow text-blue-600"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    <RotateCw className="w-3 h-3" /> Rotate
-                  </button>
-                </div>
-
-                <button
-                  onClick={() =>
-                    state.addPart({
-                      id: `custom_part_${Date.now()}`,
-                      name: "New Board",
-                      type: "shelf",
-                      dimensions: { w: 400, h: 18, d: 300 },
-                      position: { x: 0, y: 0, z: 0 },
-                      grainActive: true,
-                      edges: { top: 0, bottom: 0, front: 0, back: 0 },
-                      materialId: state.material.id,
-                      color: state.material.color,
-                    })
-                  }
-                  className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-purple-700 dashed-border shadow-sm"
-                >
-                  <Plus className="w-4 h-4" /> Add Board
-                </button>
-              </div>
-
               {state.selectedPartId ? (
                 (() => {
                   const part = state.parts.find(
@@ -606,7 +573,7 @@ export const Controls: React.FC = () => {
                       {/* Position */}
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase">
-                          Position (mm)
+                          Posición (mm)
                         </label>
                         <div className="grid grid-cols-3 gap-2 mt-1">
                           {["x", "y", "z"].map((axis) => (
@@ -639,7 +606,7 @@ export const Controls: React.FC = () => {
                       {/* Rotation */}
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase">
-                          Rotation (deg)
+                          Rotación (grados)
                         </label>
                         <div className="grid grid-cols-3 gap-2 mt-1">
                           {["x", "y", "z"].map((axis) => {
@@ -681,7 +648,7 @@ export const Controls: React.FC = () => {
                       {/* Dimensions */}
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase">
-                          Dimensions
+                          Dimensiones
                         </label>
                         <div className="grid grid-cols-3 gap-2 mt-1">
                           {["w", "h", "d"].map((dim) => (
@@ -716,7 +683,7 @@ export const Controls: React.FC = () => {
               ) : (
                 <div className="text-center py-8 text-gray-400 text-xs flex flex-col items-center gap-2">
                   <MousePointer2 className="w-6 h-6 opacity-20" />
-                  Select a part to edit properties
+                  Selecciona una pieza para editar
                 </div>
               )}
             </div>
@@ -728,9 +695,9 @@ export const Controls: React.FC = () => {
           <div className="flex items-center justify-between text-xs text-gray-400 mb-3 px-1">
             <div className="flex items-center gap-1">
               <MousePointer2 className="w-3 h-3" />
-              <span>Interact with 3D model</span>
+              <span>Interactúa con el modelo 3D</span>
             </div>
-            <span>Scale 1:1</span>
+            <span>Escala 1:1</span>
           </div>
 
           <button
@@ -742,7 +709,7 @@ export const Controls: React.FC = () => {
             ) : (
               <Download className="w-4 h-4" />
             )}
-            {copied ? "Exported!" : "Export Production JSON"}
+            {copied ? "¡Exportado!" : "Exportar JSON Producción"}
           </button>
         </div>
       </div>

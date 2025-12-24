@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { CabinetState, Part, Dimensions, Material } from '../types';
+import type { CabinetState, Part, Dimensions, Material, Measurement } from '../types';
 
 const DEFAULT_MATERIAL: Material = {
     id: 'mat_white_18',
-    name: 'White Melamine',
+    name: 'Melamina Blanca',
     thickness: 18,
     color: '#e0e0e0',
 };
@@ -37,7 +37,7 @@ const INITIAL_FRONTS: CabinetState['fronts'] = {
 
 const DRAWER_BOX_MATERIAL: Material = {
     id: 'mat_white_15',
-    name: 'White Internal',
+    name: 'Blanco Interno',
     thickness: 15,
     color: '#ffffff'
 };
@@ -356,6 +356,11 @@ export const useStore = create<CabinetState>((set, get) => ({
     viewConfig: { explodeFactor: 0, showLabels: false },
     selectedPartId: null,
 
+    // Measurement Tool
+    measureMode: false,
+    measurePendingPoint: null,
+    measurements: [],
+
     setDesignMode: (mode) => set({ designMode: mode }),
     setGizmoMode: (mode) => set({ gizmoMode: mode }),
     setViewConfig: (config) => set((state) => ({ viewConfig: { ...state.viewConfig, ...config } })),
@@ -379,6 +384,51 @@ export const useStore = create<CabinetState>((set, get) => ({
             selectedPartId: state.selectedPartId === id ? null : state.selectedPartId
         }));
     },
+
+    setMeasureMode: (active) => set({ measureMode: active }),
+    addMeasurement: (m) => set((state) => ({ measurements: [...state.measurements, m] })),
+    removeMeasurement: (id) => set((state) => ({
+        measurements: state.measurements.filter((m) => m.id !== id)
+    })),
+
+    addMeasurementPoint: (point) => {
+        const { measurePendingPoint, measurements } = get();
+        if (measurePendingPoint) {
+            // Complete measurement
+            // Calculate distance manually to avoid THREE dependency in store logic if possible, or just standard math
+            const start = measurePendingPoint;
+            const end = point;
+            const dist = Math.sqrt(
+                Math.pow(end.x - start.x, 2) +
+                Math.pow(end.y - start.y, 2) +
+                Math.pow(end.z - start.z, 2)
+            );
+
+            const newM: Measurement = {
+                id: `m_${Date.now()}`,
+                start,
+                end,
+                distance: dist
+            };
+
+            set({
+                measurements: [...measurements, newM],
+                measurePendingPoint: null
+            });
+        } else {
+            set({ measurePendingPoint: point });
+        }
+    },
+
+    clearMeasurements: () => set({ measurements: [], measurePendingPoint: null }),
+
+    resetScene: () => set({
+        parts: [],
+        measurements: [],
+        measurePendingPoint: null,
+        selectedPartId: null,
+        designMode: 'manual'
+    }),
 
     setDimensions: (w, h, d) => {
         const { material, backPanel, shelves, fronts, designMode } = get();
@@ -433,6 +483,17 @@ export const useStore = create<CabinetState>((set, get) => ({
             });
         } else {
             set({ fronts: newFronts });
+        }
+    },
+    setMaterial: (mat) => {
+        const { dimensions, backPanel, shelves, fronts, designMode } = get();
+        if (designMode === 'parametric') {
+            set({
+                material: mat,
+                parts: calculateParts(dimensions, mat, backPanel, shelves, fronts, get().frontMaterial)
+            });
+        } else {
+            set({ material: mat });
         }
     },
     setFrontMaterial: (mat) => {

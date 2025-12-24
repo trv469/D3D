@@ -1,43 +1,26 @@
 import { Canvas } from "@react-three/fiber";
+import { useRef, Suspense } from "react";
 import {
   OrbitControls,
   Grid,
   ContactShadows,
   Environment,
   Loader,
+  GizmoHelper,
+  GizmoViewcube,
 } from "@react-three/drei";
 import { Cabinet } from "./components/3d/Cabinet";
 import { Controls } from "./components/ui/Controls";
-import { useRef, Suspense } from "react";
+import { MeasureTool } from "./components/tools/MeasureTool";
+import { Toolbox } from "./components/ui/Toolbox";
+import { ContextToolbar } from "./components/ui/ContextToolbar";
 import * as THREE from "three";
 import { useStore } from "./store/useStore";
-import { Box } from "lucide-react";
-
-const LIBRARY_ITEMS = [
-  { type: "shelf", name: "Repisa", icon: Box, dims: { w: 400, h: 18, d: 300 } },
-  {
-    type: "divider",
-    name: "Divisor",
-    icon: Box,
-    dims: { w: 18, h: 400, d: 300 },
-  },
-  { type: "panel", name: "Panel", icon: Box, dims: { w: 400, h: 400, d: 18 } },
-];
-
-// ...
 
 function App() {
   const cameraRef = useRef<THREE.Camera | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleDragStart = (
-    e: React.DragEvent,
-    item: (typeof LIBRARY_ITEMS)[0]
-  ) => {
-    e.dataTransfer.setData("application/json", JSON.stringify(item));
-    e.dataTransfer.effectAllowed = "copy";
-  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -109,34 +92,19 @@ function App() {
 
   return (
     <div className="w-full h-screen bg-gray-50 flex overflow-hidden">
-      {/* Sidebar - Modules */}
-      <div className="w-20 bg-white border-r flex flex-col items-center py-6 gap-4 z-10 shadow-sm">
-        <div className="mb-4">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest rotate-[-90deg]">
-            LIB
-          </span>
-        </div>
-        {LIBRARY_ITEMS.map((item) => (
-          <div
-            key={item.name}
-            draggable
-            onDragStart={(e) => handleDragStart(e, item)}
-            className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center cursor-grab hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            title={item.name}
-          >
-            <item.icon className="w-6 h-6" />
-          </div>
-        ))}
-      </div>
+      {/* Left Panel - Toolbox (Tools + Library) */}
+      <Toolbox />
 
+      {/* Main 3D Area */}
       {/* Main 3D Area */}
       <div
         ref={containerRef}
-        className="flex-1 relative"
+        className="flex-1 relative min-w-0 overflow-hidden"
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
       >
         <Canvas
+          className="w-full h-full"
           camera={{ position: [2000, 2000, 2000], fov: 45, far: 50000 }}
           onPointerMissed={() => useStore.getState().selectPart(null)}
           onCreated={({ camera, scene }) => {
@@ -192,19 +160,28 @@ function App() {
             sectionColor="#e5e7eb"
             cellColor="#f3f4f6"
           />
+
+          <MeasureTool />
+
+          <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
+            <GizmoViewcube
+              faces={["Der", "Izq", "Arr", "Aba", "Frente", "Atrás"]}
+              color="#f3f4f6"
+              strokeColor="#d1d5db"
+              textColor="#374151"
+              hoverColor="#3b82f6"
+            />
+          </GizmoHelper>
         </Canvas>
 
-        {/* Overlay Info (Top Left) */}
-        <div className="absolute top-4 left-4 pointer-events-none">
-          <h1 className="text-2xl font-bold text-gray-800">D3D Designer</h1>
-          <p className="text-sm text-gray-500">Parametric Core v0.1</p>
-        </div>
+        <ContextToolbar />
+        <Loader />
       </div>
 
-      <div className="relative z-10">
-        <Controls />
+      {/* Right Panel - Properties (Controls) */}
+      <div className="w-80 h-full z-30 shadow-xl relative border-l bg-white flex-none">
+        <Controls fixed />
       </div>
-      <Loader />
     </div>
   );
 }
